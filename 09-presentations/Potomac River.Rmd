@@ -1,0 +1,151 @@
+---
+title: "Potomac River Data Presentation"
+author: "Colby Pastel"
+date: "2024-03-27"
+output: 
+  beamer_presentation:
+    theme: "Singapore"
+    colortheme: "seahorse"
+fontsize: 10pt
+classoption: "aspectratio=169"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  prompt = FALSE,
+  tidy = FALSE, 
+  comment = NA,
+  message = FALSE, 
+  warning = FALSE,
+  fig.align = 'center'
+)
+```
+
+## Description of Data
+
+- Downloaded data from the United States Geological Survey (USGS) database as a .txt file
+
+- Daily data of the Potomac River from the Little Falls Pump Station (USGS site 01646500) for every day of 2023
+
+- Data was opened and cleaned in Excel 
+
+- The site is located 1 mi upstream of DC
+
+- Water parameters include: temperature, pH, turbidity, dissolved oxygen, nitrogen, discharge
+
+- USGS gives its data a grade for approved, provisional, and estimated. Assumed data is approved for this analysis. 
+
+## Site Location
+```{r, fig.align = 'center', out.width = "60%"}
+knitr::include_graphics("/Users/Colby/Desktop/SIS-750/09-presentations/USGS station map.png")
+```
+
+## Discharge
+- Discharge (Q) is a measure of water flow. Common units are cubic feet per second (cfs) and gallons per minute (gpm)
+```{r, echo = F, eval = T}
+# Load packages
+library(tidyverse)
+library(haven)
+library(patchwork)
+library(readxl)
+
+# Load data
+df = read_excel('/Users/Colby/Desktop/SIS-750/09-presentations/Presentation/cleaned_data.xlsm')
+
+# Change date format
+df =
+  df |>
+  mutate(Date = as_date(Date))
+
+summary(df$Discharge)
+```
+
+```{r, fig.align = 'center', out.width = "50%"}
+# Analysis 1
+Q = ggplot(df, aes(x = Date, y = Discharge)) +
+  geom_line(color = 'dodgerblue2', size = 1) + 
+  geom_point(alpha = 1/4, color = 'dodgerblue2', size = 3) +
+  labs(
+  x = 'Time', 
+  y = 'Discharge (cfs)',
+  title = 'Daily Potomac River Flow (2023)'
+  ) +
+  scale_y_continuous(
+    limits = c(0, 35000),
+    breaks = c(0, 5000, 10000, 15000, 20000, 25000, 30000, 35000),
+    labels = c(0, 5000, 10000, 15000, 20000, 25000, 30000, 35000),
+    expand = c(0, 0)) +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  theme_bw(base_size = 22) +
+  theme(
+    legend.position = 'none',
+    plot.title = element_text(hjust = 0.5),
+    panel.grid.minor.x = element_blank()
+  )
+
+Q
+```
+
+##  Dissolved Oxygen and Nitrogen
+
+- Dissolved oxygen (DO) is a measure of how much dissolved oxygen is in water. Units are mg/L as DO.
+
+- Nitrogen (N) is a measure of the amount of dissolved nitrogen in water. Units are mg/L as N. 
+
+```{r, fig.align='center', out.width = "50%"}
+  # Analysis 2
+O = ggplot(df, aes(x = Date, y = DO_Mean)) +
+  geom_line(color = 'forestgreen', size = 1) + 
+  geom_point(alpha = 1/4, color = 'forestgreen', size = 3) +
+  labs(
+    x = 'Time', 
+    y = 'DO (mg/L)',
+    #title = 'Daily Potomac River Dissolved Oxygen (2023)'
+  ) +
+  scale_y_continuous(
+    limits = c(0, 16),
+    expand = c(0, 0)) +
+  scale_x_date(date_labels = "%b") +
+  theme_bw(base_size = 18) +
+  theme(
+    legend.position = 'none',
+    #plot.title = element_text(hjust = 0.5),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  )
+
+N = ggplot(df, aes(x = Date, y = NO3_NO2_Mean)) +
+  geom_line(color = 'firebrick2', size = 1) + 
+  geom_point(alpha = 1/4, color = 'firebrick2', size = 3) +
+  labs(
+    x = 'Time', 
+    y = 'Nitrogen (mg/L)',
+    #title = 'Daily Potomac River Dissolved Nitrogen (2023)'
+  ) +
+  scale_y_continuous(
+    limits = c(0, 2.5),
+    expand = c(0, 0)) +
+  scale_x_date(date_labels = "%b") +
+  theme_bw(base_size = 18) +
+  theme(
+    legend.position = 'none',
+    #plot.title = element_text(hjust = 0.5),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  )
+
+patchy =
+  O + N + plot_layout(guides = "collect") +
+  plot_annotation(
+    title = 'Daily Potomac River Dissolved Oxygen & Nitrogen (2023)'
+  ) &
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 22),
+    legend.position = "right"
+  )
+
+patchy
+```
